@@ -7,24 +7,24 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('giang_vien', function (Blueprint $table) {
+        Schema::create('lecturer', function (Blueprint $table) {
             $table->id();
-            $table->string('ho_ten', 255);
-            $table->enum('gioi_tinh', ['Nam', 'Nữ', 'Khác'])->nullable();
-            $table->string('dia_chi', 255)->nullable();
+            $table->string('full_name', 255); // Lecturer full name
+            $table->enum('gender', ['male', 'female', 'other'])->nullable();
+            $table->string('address', 255)->nullable();
             $table->string('email', 255)->unique();
-            $table->string('sdt', 20)->nullable();
-            $table->string('ma_giao_vien', 50)->unique();
-            $table->unsignedBigInteger('don_vi_id')->nullable();
+            $table->string('phone', 20)->nullable();
+            $table->string('lecturer_code', 50)->unique();
+            $table->unsignedBigInteger('unit_id')->nullable();
 
-            $table->foreign('don_vi_id')
-                  ->references('id')->on('don_vi')
+            $table->foreign('unit_id')
+                  ->references('id')->on('unit')
                   ->onDelete('set null');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('giang_vien');
+    Schema::dropIfExists('lecturer');
     }
 };

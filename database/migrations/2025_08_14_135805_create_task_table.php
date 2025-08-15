@@ -9,19 +9,19 @@ return new class extends Migration {
     {
         Schema::create('task', function (Blueprint $table) {
             $table->id();
-            $table->string('tieu_de', 255);
-            $table->text('mo_ta')->nullable();
-            $table->timestamp('ngay_tao')->useCurrent();
+            $table->string('title', 255); // Task title
+            $table->text('description')->nullable();
+            $table->timestamp('created_at')->useCurrent();
 
-            $table->unsignedBigInteger('nguoi_nhan_id');
-            $table->enum('loai_nguoi_nhan', ['giang_vien', 'sinh_vien']);
+            $table->unsignedBigInteger('receiver_id');
+            $table->enum('receiver_type', ['lecturer', 'student']);
 
-            $table->unsignedBigInteger('nguoi_tao_id');
-            $table->enum('loai_nguoi_tao', ['giang_vien', 'sinh_vien']);
+            $table->unsignedBigInteger('creator_id');
+            $table->enum('creator_type', ['lecturer', 'student']);
 
-            // Gợi ý index để truy vấn nhanh
-            $table->index(['loai_nguoi_nhan', 'nguoi_nhan_id']);
-            $table->index(['loai_nguoi_tao', 'nguoi_tao_id']);
+            // Index for fast query
+            $table->index(['receiver_type', 'receiver_id']);
+            $table->index(['creator_type', 'creator_id']);
         });
     }
 

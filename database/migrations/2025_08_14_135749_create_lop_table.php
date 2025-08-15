@@ -8,23 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('lop', function (Blueprint $table) {
+        Schema::create('class', function (Blueprint $table) {
             $table->id();
-            $table->string('ten_lop');
-            $table->string('ma_lop')->nullable()->unique();
-            $table->unsignedBigInteger('khoa_id');
-            $table->unsignedBigInteger('giang_vien_id')->nullable();
-            $table->string('nam_hoc', 20)->nullable();
+            $table->string('class_name');
+            $table->string('class_code')->nullable()->unique();
+            $table->unsignedBigInteger('faculty_id');
+            $table->unsignedBigInteger('lecturer_id')->nullable();
+            $table->string('school_year', 20)->nullable();
             $table->timestamps();
 
-            // Khóa ngoại
-            $table->foreign('khoa_id')->references('id')->on('don_vi')->onDelete('cascade');
-            $table->foreign('giang_vien_id')->references('id')->on('giang_vien')->onDelete('set null');
+            // Foreign keys
+            $table->foreign('faculty_id')->references('id')->on('unit')->onDelete('cascade');
+            $table->foreign('lecturer_id')->references('id')->on('lecturer')->onDelete('set null');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('lop');
+    Schema::dropIfExists('class');
     }
 };
