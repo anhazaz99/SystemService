@@ -61,6 +61,16 @@ class UserResource extends JsonResource
      */
     private function getUserType($user): string
     {
+        // Kiểm tra dựa trên thuộc tính có sẵn
+        if (isset($user->student_code)) {
+            return 'student';
+        }
+        
+        if (isset($user->lecturer_code)) {
+            return 'lecturer';
+        }
+        
+        // Kiểm tra dựa trên instance
         if ($user instanceof Student) {
             return 'student';
         }

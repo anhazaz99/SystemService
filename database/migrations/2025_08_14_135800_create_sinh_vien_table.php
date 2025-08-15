@@ -16,7 +16,7 @@ return new class extends Migration {
         $table->string('email', 255)->unique();
         $table->string('phone', 20)->nullable();
         $table->string('student_code', 50)->unique();
-
+        $table->unsignedBigInteger('enrolled_id')->nullable();
         // Link to class table
         $table->unsignedBigInteger('class_id')->nullable();
         $table->foreign('class_id')

@@ -129,4 +129,77 @@ class StudentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Sinh viên xem thông tin của mình
+     */
+    public function showOwnProfile(Request $request): JsonResponse
+    {
+        try {
+            $userId = $request->attributes->get('jwt_user_id');
+            $userType = $request->attributes->get('jwt_user_type');
+            
+            if ($userType !== 'student') {
+                return response()->json([
+                    'message' => 'Chỉ sinh viên mới có thể truy cập chức năng này'
+                ], 403);
+            }
+            
+            $student = $this->studentService->getStudentById($userId);
+            
+            if (!$student) {
+                return response()->json([
+                    'message' => 'Không tìm thấy thông tin sinh viên'
+                ], 404);
+            }
+            
+            return response()->json(new UserResource($student));
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi lấy thông tin sinh viên',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Sinh viên cập nhật thông tin của mình
+     */
+    public function updateOwnProfile(Request $request): JsonResponse
+    {
+        try {
+            $userId = $request->attributes->get('jwt_user_id');
+            $userType = $request->attributes->get('jwt_user_type');
+            
+            if ($userType !== 'student') {
+                return response()->json([
+                    'message' => 'Chỉ sinh viên mới có thể truy cập chức năng này'
+                ], 403);
+            }
+            
+            $student = $this->studentService->getStudentById($userId);
+            
+            if (!$student) {
+                return response()->json([
+                    'message' => 'Không tìm thấy thông tin sinh viên'
+                ], 404);
+            }
+            
+            // Chỉ cho phép cập nhật một số trường nhất định
+            $allowedFields = ['full_name', 'phone', 'address'];
+            $updateData = array_intersect_key($request->all(), array_flip($allowedFields));
+            
+            $updatedStudent = $this->studentService->updateStudent($student, $updateData);
+            
+            return response()->json([
+                'message' => 'Cập nhật thông tin thành công',
+                'data' => new UserResource($updatedStudent)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi cập nhật thông tin sinh viên',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

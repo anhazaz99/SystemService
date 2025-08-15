@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Middleware\JwtAuthenticate;
+use App\Http\Middleware\JwtMiddleware;
+use App\Http\Middleware\AdminOnlyMiddleware;
+use App\Http\Middleware\LecturerOnlyMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,7 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
-        $middleware->alias(['jwt' => JwtAuthenticate::class,]);
+        $middleware->alias([
+            'jwt' => JwtMiddleware::class,
+            'admin' => AdminOnlyMiddleware::class,
+            'lecturer' => LecturerOnlyMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

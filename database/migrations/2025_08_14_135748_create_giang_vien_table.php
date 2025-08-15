@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('phone', 20)->nullable();
             $table->string('lecturer_code', 50)->unique();
             $table->unsignedBigInteger('unit_id')->nullable();
+            $table->unsignedBigInteger('assignes_id')->nullable();
 
             $table->foreign('unit_id')
                   ->references('id')->on('unit')
