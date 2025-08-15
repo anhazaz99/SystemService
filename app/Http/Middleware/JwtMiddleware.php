@@ -7,7 +7,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 
-class JwtAuthenticate
+class JwtMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
