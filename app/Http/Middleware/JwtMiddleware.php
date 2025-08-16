@@ -6,51 +6,53 @@ use Closure;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class JwtMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(Request $request, Closure $next): Response
     {
-        $token = $this->getTokenFromHeader($request);
+        $token = $request->bearerToken();
+
         if (!$token) {
-            return response()->json(['error' => 'Chưa có token được đưa lên Authorization header'], 401);
-        }
-
-        $secret = config('jwt.secret');
-        $algo   = config('jwt.algorithm', 'HS256');
-
-        if (empty($secret)) {
-            return response()->json(['error' => 'JWT secret is not configured'], 500);
+            return response()->json([
+                'message' => 'Token không được cung cấp'
+            ], 401);
         }
 
         try {
+            $secret = config('jwt.secret');
+            $algo = config('jwt.algorithm', 'HS256');
+
+            if (!$secret) {
+                return response()->json([
+                    'message' => 'JWT secret is not configured'
+                ], 500);
+            }
+
             $decoded = JWT::decode($token, new Key($secret, $algo));
-            $payload = (array) $decoded;
-
-            // Kiểm tra hạn token (exp)
-            if (isset($payload['exp']) && $payload['exp'] < time()) {
-                return response()->json(['error' => 'Token đã hết hạn'], 401);
+            
+            // Kiểm tra token hết hạn
+            if (isset($decoded->exp) && $decoded->exp < time()) {
+                return response()->json([
+                    'message' => 'Token đã hết hạn'
+                ], 401);
             }
 
-            // Gắn payload vào request
-            $request->attributes->set('jwt_payload', $payload);
-            if (isset($payload['sub'])) {
-                $request->attributes->set('jwt_sub', $payload['sub']);
-            }
-        } catch (\Throwable $e) {
-            return response()->json(['error' => 'Token không hợp lệ : ' . $e->getMessage()], 401);
-        }
+            // Lưu thông tin user vào request để sử dụng trong controller
+            $request->attributes->set('jwt_payload', $decoded);
+            $request->attributes->set('jwt_user_id', $decoded->sub);
+            $request->attributes->set('jwt_user_type', $decoded->user_type ?? null);
 
-        return $next($request);
-    }
-
-    private function getTokenFromHeader(Request $request): ?string
-    {
-        $authorization = $request->header('Authorization', '');
-        if (!str_starts_with($authorization, 'Bearer ')) {
-            return null;
+            return $next($request);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Token không hợp lệ',
+                'error' => $e->getMessage()
+            ], 401);
         }
-        $token = substr($authorization, 7);
-        return $token !== '' ? $token : null;
     }
 }
