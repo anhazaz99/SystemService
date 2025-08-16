@@ -8,15 +8,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
-    use HasFactory;
+    
+    protected $table = 'task';
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $fillable = [
+        'tieu_de',
+        'mo_ta',
+        'ngay_tao',
+        'nguoi_nhan_id',
+        'loai_nguoi_nhan',
+        'nguoi_tao_id',
+        'loai_nguoi_tao'
+    ];
 
-    // protected static function newFactory(): TaskFactory
-    // {
-    //     // return TaskFactory::new();
-    // }
+    public function files()
+    {
+        return $this->hasMany(TaskFile::class, 'task_id');
+    }
 }

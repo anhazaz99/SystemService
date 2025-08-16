@@ -9,14 +9,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class TaskFile extends Model
 {
     use HasFactory;
+    protected $table = 'task_file';
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $fillable = [
+        'task_id',
+        'file_path'
+    ];
 
-    // protected static function newFactory(): TaskFileFactory
-    // {
-    //     // return TaskFileFactory::new();
-    // }
+    public function task()
+    {
+        return $this->belongsTo(Task::class, 'task_id');
+    }
 }

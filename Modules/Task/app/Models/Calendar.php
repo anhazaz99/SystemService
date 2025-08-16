@@ -9,14 +9,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Calendar extends Model
 {
     use HasFactory;
+    protected $table = 'calendar';
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $fillable = [
+        'tieu_de', 'mo_ta', 'thoi_gian_bat_dau', 'thoi_gian_ket_thuc',
+        'loai_su_kien', 'task_id', 'nguoi_tham_gia_id', 'loai_nguoi_tham_gia',
+        'nguoi_tao_id', 'loai_nguoi_tao'
+    ];
 
-    // protected static function newFactory(): CalendarFactory
-    // {
-    //     // return CalendarFactory::new();
-    // }
+    public function task()
+    {
+        return $this->belongsTo(Task::class, 'task_id');
+    }
 }
