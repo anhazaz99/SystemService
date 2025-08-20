@@ -51,6 +51,7 @@ class LecturerController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+        
     }
 
     /**
@@ -231,4 +232,6 @@ class LecturerController extends Controller
             ], 500);
         }
     }
+
+
 }

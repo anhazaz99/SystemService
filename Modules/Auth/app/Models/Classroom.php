@@ -22,7 +22,7 @@ class Classroom extends Model
      */
     public function faculty()
     {
-        return $this->belongsTo(Unit::class, 'faculty_id');
+        return $this->belongsTo(\App\Models\Faculty::class, 'faculty_id');
     }
 
     /**

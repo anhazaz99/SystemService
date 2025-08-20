@@ -8,16 +8,28 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Service Provider chính của module Task
+ * 
+ * Provider này đăng ký tất cả các services, commands, translations, config của module
+ * Tuân thủ Clean Architecture: chỉ đăng ký services, không chứa business logic
+ */
 class TaskServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
+    /**
+     * Tên module
+     */
     protected string $name = 'Task';
 
+    /**
+     * Tên module viết thường
+     */
     protected string $nameLower = 'task';
 
     /**
-     * Boot the application events.
+     * Boot các events của application
      */
     public function boot(): void
     {
@@ -30,7 +42,7 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register the service provider.
+     * Đăng ký service provider
      */
     public function register(): void
     {
@@ -39,7 +51,7 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Đăng ký commands theo format Command::class
      */
     protected function registerCommands(): void
     {
@@ -47,7 +59,7 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register command Schedules.
+     * Đăng ký lịch trình commands
      */
     protected function registerCommandSchedules(): void
     {
@@ -58,7 +70,7 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register translations.
+     * Đăng ký translations
      */
     public function registerTranslations(): void
     {
@@ -74,7 +86,7 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register config.
+     * Đăng ký config
      */
     protected function registerConfig(): void
     {
@@ -107,7 +119,10 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Merge config from the given path recursively.
+     * Merge config từ đường dẫn được chỉ định một cách đệ quy
+     * 
+     * @param string $path Đường dẫn đến file config
+     * @param string $key Key của config
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -118,7 +133,7 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register views.
+     * Đăng ký views
      */
     public function registerViews(): void
     {
@@ -133,13 +148,20 @@ class TaskServiceProvider extends ServiceProvider
     }
 
     /**
-     * Get the services provided by the provider.
+     * Lấy danh sách services được cung cấp bởi provider
+     * 
+     * @return array Mảng chứa tên các services
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Lấy danh sách đường dẫn views có thể publish
+     * 
+     * @return array Mảng chứa các đường dẫn views
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];

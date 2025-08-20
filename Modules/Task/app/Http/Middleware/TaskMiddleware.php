@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Task\Http\Middleware;
+namespace Modules\Task\app\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class TaskMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Xử lý request đến.
      */
     public function handle(Request $request, Closure $next)
     {

@@ -34,13 +34,19 @@ class StudentService
     /**
      * Tạo sinh viên mới và tự động tạo tài khoản
      */
-    public function createStudentWithAccount(array $studentData): Student
+    public function createStudentWithAccount(array $studentData, array $accountData = null): Student
     {
         // Tạo sinh viên mới
         $student = Student::create($studentData);
         
-        // Tự động tạo tài khoản
-        $this->createStudentAccount($student);
+        // Tạo tài khoản
+        if ($accountData) {
+            // Sử dụng thông tin tài khoản được cung cấp
+            $this->createStudentAccountWithData($student, $accountData);
+        } else {
+            // Tự động tạo tài khoản với thông tin mặc định
+            $this->createStudentAccount($student);
+        }
         
         return $student;
     }
@@ -56,6 +62,18 @@ class StudentService
         $this->authRepository->createStudentAccount([
             'username' => $username,
             'password' => $password,
+            'student_id' => $student->id
+        ]);
+    }
+
+    /**
+     * Tạo tài khoản cho sinh viên với thông tin được cung cấp
+     */
+    private function createStudentAccountWithData(Student $student, array $accountData): void
+    {
+        $this->authRepository->createStudentAccount([
+            'username' => $accountData['username'],
+            'password' => $accountData['password'],
             'student_id' => $student->id
         ]);
     }

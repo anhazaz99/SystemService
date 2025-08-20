@@ -86,5 +86,23 @@ class AuthRepository implements AuthRepositoryInterface
     {
         return Lecturer::find($id);
     }
+
+    /**
+     * Tìm sinh viên theo username
+     */
+    public function findStudentByUsername(string $username)
+    {
+        $account = $this->findStudentAccountByUsername($username);
+        return $account ? $account->student : null;
+    }
+
+    /**
+     * Tìm giảng viên theo username
+     */
+    public function findLecturerByUsername(string $username)
+    {
+        $account = $this->findLecturerAccountByUsername($username);
+        return $account ? $account->lecturer : null;
+    }
 }
 

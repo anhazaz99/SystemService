@@ -3,9 +3,12 @@
 namespace Modules\Auth\app\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
 class Student extends Model
 {
+    use Notifiable;
+
     protected $table = 'student';
 
     protected $fillable = [
@@ -31,5 +34,15 @@ class Student extends Model
     public function account()
     {
         return $this->hasOne(StudentAccount::class, 'student_id');
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     *
+     * @return string
+     */
+    public function routeNotificationForMail()
+    {
+        return $this->email;
     }
 }

@@ -6,24 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Classroom extends Model
 {
-    protected $table = 'lop';
+    protected $table = 'class';
 
     protected $fillable = [
-        'ten_lop', 'ma_lop', 'khoa_id', 'giang_vien_id', 'nam_hoc'
+        'class_name', 'class_code', 'faculty_id', 'lecturer_id', 'school_year'
     ];
 
-    public function unit()
+    public function faculty()
     {
-        return $this->belongsTo(Unit::class, 'khoa_id');
+        return $this->belongsTo(Faculty::class, 'faculty_id');
     }
 
     public function lecturer()
     {
-        return $this->belongsTo(Lecturer::class, 'giang_vien_id');
+        return $this->belongsTo(Lecturer::class, 'lecturer_id');
     }
 
     public function students()
     {
-        return $this->hasMany(Student::class, 'lop_id');
+        return $this->hasMany(Student::class, 'class_id');
     }
 }

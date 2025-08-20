@@ -6,24 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lecturer extends Model
 {
-    protected $table = 'giang_vien';
+    protected $table = 'lecturer';
 
     protected $fillable = [
-        'ho_ten', 'gioi_tinh', 'dia_chi', 'email', 'sdt', 'ma_giao_vien', 'don_vi_id'
+        'full_name', 'gender', 'address', 'email', 'phone', 'lecturer_code', 'faculty_id'
     ];
 
-    public function unit()
+    public function faculty()
     {
-        return $this->belongsTo(Unit::class, 'don_vi_id');
+        return $this->belongsTo(Faculty::class, 'faculty_id');
     }
 
     public function account()
     {
-        return $this->hasOne(LecturerAccount::class, 'giang_vien_id');
+        return $this->hasOne(LecturerAccount::class, 'lecturer_id');
     }
 
     public function classes()
     {
-        return $this->hasMany(Classroom::class, 'giang_vien_id');
+        return $this->hasMany(Classroom::class, 'lecturer_id');
     }
 }

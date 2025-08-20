@@ -5,14 +5,23 @@ namespace Modules\Task\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * Route Service Provider của module Task
+ * 
+ * Provider này đăng ký các routes cho module Task
+ * Tuân thủ Clean Architecture: chỉ đăng ký routes, không chứa business logic
+ */
 class RouteServiceProvider extends ServiceProvider
 {
+    /**
+     * Tên module
+     */
     protected string $name = 'Task';
 
     /**
-     * Called before routes are registered.
+     * Được gọi trước khi routes được đăng ký
      *
-     * Register any model bindings or pattern based filters.
+     * Đăng ký các model bindings hoặc pattern based filters
      */
     public function boot(): void
     {
@@ -20,7 +29,7 @@ class RouteServiceProvider extends ServiceProvider
     }
 
     /**
-     * Define the routes for the application.
+     * Định nghĩa routes cho application
      */
     public function map(): void
     {
@@ -29,9 +38,9 @@ class RouteServiceProvider extends ServiceProvider
     }
 
     /**
-     * Define the "web" routes for the application.
+     * Định nghĩa "web" routes cho application
      *
-     * These routes all receive session state, CSRF protection, etc.
+     * Các routes này nhận session state, CSRF protection, etc.
      */
     protected function mapWebRoutes(): void
     {
@@ -39,9 +48,9 @@ class RouteServiceProvider extends ServiceProvider
     }
 
     /**
-     * Define the "api" routes for the application.
+     * Định nghĩa "api" routes cho application
      *
-     * These routes are typically stateless.
+     * Các routes này thường là stateless
      */
     protected function mapApiRoutes(): void
     {

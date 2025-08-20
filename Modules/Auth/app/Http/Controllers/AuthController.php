@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Modules\Auth\app\Services\AuthService;
 use Modules\Auth\app\Http\Requests\LoginRequest;
 use Modules\Auth\app\Http\Resources\LoginResource;
+use Modules\Auth\app\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -18,44 +19,6 @@ class AuthController extends Controller
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
-    }
-
-    /**
-     * Đăng nhập sinh viên
-     */
-    public function loginStudent(LoginRequest $request): JsonResponse
-    {
-        $user = $this->authService->loginStudent(
-            $request->username,
-            $request->password
-        );
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'Thông tin đăng nhập không chính xác'
-            ], 401);
-        }
-
-        return response()->json(new LoginResource($user));
-    }
-
-    /**
-     * Đăng nhập giảng viên
-     */
-    public function loginLecturer(LoginRequest $request): JsonResponse
-    {
-        $user = $this->authService->loginLecturer(
-            $request->username,
-            $request->password
-        );
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'Thông tin đăng nhập không chính xác'
-            ], 401);
-        }
-
-        return response()->json(new LoginResource($user));
     }
 
     /**
@@ -75,6 +38,54 @@ class AuthController extends Controller
             'message' => 'Loại người dùng không hợp lệ'
         ], 400);
     }
+
+    /**
+     * Đăng nhập sinh viên
+     */
+    public function loginStudent(LoginRequest $request): JsonResponse
+    {
+        $user = $this->authService->loginStudent(
+            $request->username,
+            $request->password
+        );
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Thông tin đăng nhập không chính xác'
+            ], 401);
+        }
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'token' => $user->token,
+            'message' => 'Đăng nhập thành công'
+        ]);
+    }
+
+    /**
+     * Đăng nhập giảng viên
+     */
+    public function loginLecturer(LoginRequest $request): JsonResponse
+    {
+        $user = $this->authService->loginLecturer(
+            $request->username,
+            $request->password
+        );
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Thông tin đăng nhập không chính xác'
+            ], 401);
+        }
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'token' => $user->token,
+            'message' => 'Đăng nhập thành công'
+        ]);
+    }
+
+
 
     /**
      * Làm mới JWT token
@@ -157,6 +168,50 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Có lỗi xảy ra khi đăng xuất',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Admin cấp token cho user
+     */
+    public function generateTokenForUser(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'username' => 'required|string',
+                'user_type' => 'required|in:student,lecturer'
+            ]);
+
+            $username = $request->username;
+            $userType = $request->user_type;
+
+            // Tìm user theo username và user_type
+            $user = null;
+            if ($userType === 'student') {
+                $user = $this->authService->findStudentByUsername($username);
+            } elseif ($userType === 'lecturer') {
+                $user = $this->authService->findLecturerByUsername($username);
+            }
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Không tìm thấy tài khoản'
+                ], 404);
+            }
+
+            // Tạo token
+            $token = $this->authService->createToken($user, $userType);
+            
+            return response()->json([
+                'message' => 'Cấp token thành công',
+                'user' => $user,
+                'token' => $token
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi cấp token',
                 'error' => $e->getMessage()
             ], 500);
         }

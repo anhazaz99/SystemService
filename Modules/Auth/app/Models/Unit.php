@@ -4,9 +4,9 @@ namespace Modules\Auth\app\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Unit extends Model
+class Faculty extends Model
 {
-    protected $table = 'unit';
+    protected $table = 'faculty';
 
     protected $fillable = [
         'name', 'type', 'parent_id'
@@ -21,7 +21,7 @@ class Unit extends Model
      */
     public function parent()
     {
-        return $this->belongsTo(Unit::class, 'parent_id');
+        return $this->belongsTo(Faculty::class, 'parent_id');
     }
 
     /**
@@ -29,7 +29,7 @@ class Unit extends Model
      */
     public function children()
     {
-        return $this->hasMany(Unit::class, 'parent_id');
+        return $this->hasMany(Faculty::class, 'parent_id');
     }
 
     /**
@@ -37,7 +37,7 @@ class Unit extends Model
      */
     public function lecturers()
     {
-        return $this->hasMany(Lecturer::class, 'unit_id');
+        return $this->hasMany(Lecturer::class, 'faculty_id');
     }
 
     /**

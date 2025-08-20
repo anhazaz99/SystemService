@@ -17,3 +17,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// Load routes từ các modules
+if (file_exists(__DIR__ . '/../Modules/Auth/routes/api.php')) {
+    require __DIR__ . '/../Modules/Auth/routes/api.php';
+}
+
+if (file_exists(__DIR__ . '/../Modules/Task/routes/api.php')) {
+    require __DIR__ . '/../Modules/Task/routes/api.php';
+}

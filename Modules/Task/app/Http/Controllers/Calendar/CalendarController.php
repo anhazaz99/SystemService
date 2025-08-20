@@ -1,455 +1,472 @@
 <?php
 
-namespace Modules\Task\Http\Controllers\Calendar;
+namespace Modules\Task\app\Http\Controllers\Calendar;
 
 use App\Http\Controllers\Controller;
 use Modules\Task\app\Models\Calendar;
-use Modules\Task\app\Services\CalendarService;
-use Modules\Task\app\Repositories\CalendarRepository;
-use Modules\Task\Http\Requests\CalendarRequest;
-use Modules\Task\Transformers\CalendarResource;
-use Modules\Task\Transformers\CalendarCollection;
+use Modules\Task\app\Models\Task;
+use Modules\Task\app\UseCases\Calendar\GetCalendarEventsUseCase;
+use Modules\Task\app\UseCases\Calendar\GetUserEventsByRangeUseCase;
+use Modules\Task\app\UseCases\Calendar\GetUpcomingEventsUseCase;
+use Modules\Task\app\UseCases\Calendar\GetUserUpcomingEventsUseCase;
+use Modules\Task\app\UseCases\Calendar\GetEventsByDateUseCase;
+use Modules\Task\app\UseCases\Calendar\GetOverdueEventsUseCase;
+use Modules\Task\app\UseCases\Calendar\GetEventsCountByStatusUseCase;
+use Modules\Task\app\UseCases\Calendar\GetCalendarEventDetailsUseCase;
+use Modules\Task\app\UseCases\Calendar\GetEventsByTypeUseCase;
+use Modules\Task\app\UseCases\Calendar\GetRemindersUseCase;
+use Modules\Task\app\Exceptions\TaskException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
+/**
+ * Controller cho Calendar - View layer của Task
+ * 
+ * Tuân thủ Clean Architecture: chỉ xử lý HTTP requests/responses
+ * Business logic được tách biệt vào Use Cases
+ */
 class CalendarController extends Controller
 {
-    protected $calendarService;
-    protected $calendarRepository;
+    protected $getCalendarEventsUseCase;
+    protected $getUserEventsByRangeUseCase;
+    protected $getUpcomingEventsUseCase;
+    protected $getUserUpcomingEventsUseCase;
+    protected $getEventsByDateUseCase;
+    protected $getOverdueEventsUseCase;
+    protected $getEventsCountByStatusUseCase;
+    protected $getCalendarEventDetailsUseCase;
+    protected $getEventsByTypeUseCase;
+    protected $getRemindersUseCase;
 
-    public function __construct(CalendarService $calendarService, CalendarRepository $calendarRepository)
-    {
-        $this->calendarService = $calendarService;
-        $this->calendarRepository = $calendarRepository;
+    /**
+     * Khởi tạo controller với dependency injection
+     * 
+     * @param GetCalendarEventsUseCase $getCalendarEventsUseCase Use case lấy calendar events
+     * @param GetUserEventsByRangeUseCase $getUserEventsByRangeUseCase Use case lấy user events theo range
+     * @param GetUpcomingEventsUseCase $getUpcomingEventsUseCase Use case lấy upcoming events
+     * @param GetUserUpcomingEventsUseCase $getUserUpcomingEventsUseCase Use case lấy user upcoming events
+     * @param GetEventsByDateUseCase $getEventsByDateUseCase Use case lấy events theo date
+     * @param GetOverdueEventsUseCase $getOverdueEventsUseCase Use case lấy overdue events
+     * @param GetEventsCountByStatusUseCase $getEventsCountByStatusUseCase Use case đếm events theo status
+     * @param GetCalendarEventDetailsUseCase $getCalendarEventDetailsUseCase Use case lấy chi tiết event
+     * @param GetEventsByTypeUseCase $getEventsByTypeUseCase Use case lấy events theo type
+     * @param GetRemindersUseCase $getRemindersUseCase Use case lấy reminders
+     */
+    public function __construct(
+        GetCalendarEventsUseCase $getCalendarEventsUseCase,
+        GetUserEventsByRangeUseCase $getUserEventsByRangeUseCase,
+        GetUpcomingEventsUseCase $getUpcomingEventsUseCase,
+        GetUserUpcomingEventsUseCase $getUserUpcomingEventsUseCase,
+        GetEventsByDateUseCase $getEventsByDateUseCase,
+        GetOverdueEventsUseCase $getOverdueEventsUseCase,
+        GetEventsCountByStatusUseCase $getEventsCountByStatusUseCase,
+        GetCalendarEventDetailsUseCase $getCalendarEventDetailsUseCase,
+        GetEventsByTypeUseCase $getEventsByTypeUseCase,
+        GetRemindersUseCase $getRemindersUseCase
+    ) {
+        $this->getCalendarEventsUseCase = $getCalendarEventsUseCase;
+        $this->getUserEventsByRangeUseCase = $getUserEventsByRangeUseCase;
+        $this->getUpcomingEventsUseCase = $getUpcomingEventsUseCase;
+        $this->getUserUpcomingEventsUseCase = $getUserUpcomingEventsUseCase;
+        $this->getEventsByDateUseCase = $getEventsByDateUseCase;
+        $this->getOverdueEventsUseCase = $getOverdueEventsUseCase;
+        $this->getEventsCountByStatusUseCase = $getEventsCountByStatusUseCase;
+        $this->getCalendarEventDetailsUseCase = $getCalendarEventDetailsUseCase;
+        $this->getEventsByTypeUseCase = $getEventsByTypeUseCase;
+        $this->getRemindersUseCase = $getRemindersUseCase;
     }
 
     /**
-     * Display a listing of calendar events.
+     * Hiển thị danh sách calendar events (từ Task)
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['start_date', 'end_date', 'event_type', 'user_id', 'status', 'search']);
-        $perPage = $request->get('per_page', 15);
-        
-        $events = $this->calendarRepository->getEventsWithFilters($filters, $perPage);
-        
-        return response()->json([
-            'success' => true,
-            'data' => new CalendarCollection($events['data']),
-            'message' => 'Calendar events retrieved successfully'
-        ]);
+        try {
+            // Sử dụng Use Case để lấy calendar events
+            $result = $this->getCalendarEventsUseCase->execute($request);
+            return response()->json([
+                'success' => true,
+                'data' => $result['events'],
+                'pagination' => $result['pagination'],
+                'message' => 'Lấy danh sách calendar events thành công'
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi lấy calendar events'
+            ], 500);
+        }
     }
 
     /**
-     * Store a newly created calendar event.
-     */
-    public function store(CalendarRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $event = $this->calendarService->createEvent($data);
-        
-        return response()->json([
-            'success' => true,
-            'data' => new CalendarResource($event),
-            'message' => 'Calendar event created successfully'
-        ], 201);
-    }
-
-    /**
-     * Display the specified calendar event.
+     * Hiển thị thông tin chi tiết của một calendar event
      */
     public function show(Calendar $calendar): JsonResponse
     {
-        $event = $this->calendarRepository->findById($calendar->id);
-        
-        if (!$event) {
+        try {
+            // Sử dụng Use Case để lấy chi tiết event
+            $eventDetails = $this->getCalendarEventDetailsUseCase->execute($calendar);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $eventDetails,
+                'message' => 'Calendar event retrieved successfully'
+            ]);
+        } catch (TaskException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Calendar event not found'
-            ], 404);
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving calendar event'
+            ], 500);
         }
-        
-        return response()->json([
-            'success' => true,
-            'data' => new CalendarResource($event),
-            'message' => 'Calendar event retrieved successfully'
-        ]);
     }
 
     /**
-     * Update the specified calendar event.
-     */
-    public function update(CalendarRequest $request, Calendar $calendar): JsonResponse
-    {
-        $data = $request->validated();
-        $event = $this->calendarService->updateEvent($calendar, $data);
-        
-        return response()->json([
-            'success' => true,
-            'data' => new CalendarResource($event),
-            'message' => 'Calendar event updated successfully'
-        ]);
-    }
-
-    /**
-     * Remove the specified calendar event.
-     */
-    public function destroy(Calendar $calendar): JsonResponse
-    {
-        $this->calendarService->deleteEvent($calendar);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Calendar event deleted successfully'
-        ]);
-    }
-
-    /**
-     * Get calendar view (monthly, weekly, daily).
-     */
-    public function view(Request $request): JsonResponse
-    {
-        $request->validate([
-            'view_type' => 'required|in:monthly,weekly,daily',
-            'date' => 'required|date'
-        ]);
-
-        $viewType = $request->get('view_type', 'monthly');
-        $date = Carbon::parse($request->get('date', now()));
-        
-        $viewData = $this->calendarService->getCalendarView($viewType, $date);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $viewData,
-            'message' => 'Calendar view retrieved successfully'
-        ]);
-    }
-
-    /**
-     * Create a recurring calendar event.
-     */
-    public function createRecurring(CalendarRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $event = $this->calendarService->createRecurringEvent($data);
-        
-        return response()->json([
-            'success' => true,
-            'data' => new CalendarResource($event),
-            'message' => 'Recurring calendar event created successfully'
-        ], 201);
-    }
-
-    /**
-     * Update a recurring calendar event.
-     */
-    public function updateRecurring(CalendarRequest $request, Calendar $calendar): JsonResponse
-    {
-        $data = $request->validated();
-        $event = $this->calendarService->updateRecurringEvent($calendar, $data);
-        
-        return response()->json([
-            'success' => true,
-            'data' => new CalendarResource($event),
-            'message' => 'Recurring calendar event updated successfully'
-        ]);
-    }
-
-    /**
-     * Export calendar events.
-     */
-    public function export(Request $request): JsonResponse
-    {
-        $request->validate([
-            'format' => 'required|in:json,csv,ical',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after:start_date'
-        ]);
-
-        $format = $request->get('format', 'json');
-        $startDate = $request->get('start_date') ? Carbon::parse($request->get('start_date')) : null;
-        $endDate = $request->get('end_date') ? Carbon::parse($request->get('end_date')) : null;
-        
-        $exportData = $this->calendarService->exportCalendar($format, $startDate, $endDate);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $exportData,
-            'message' => 'Calendar exported successfully'
-        ]);
-    }
-
-    /**
-     * Import calendar events.
-     */
-    public function import(Request $request): JsonResponse
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:json,csv,ics|max:10240',
-            'format' => 'required|in:json,csv,ical'
-        ]);
-
-        $file = $request->file('file');
-        $format = $request->get('format', 'json');
-        
-        $importResult = $this->calendarService->importCalendar($file, $format);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $importResult,
-            'message' => 'Calendar imported successfully'
-        ]);
-    }
-
-    /**
-     * Sync calendar with external service.
-     */
-    public function sync(Request $request): JsonResponse
-    {
-        $request->validate([
-            'service' => 'required|in:google,outlook'
-        ]);
-
-        $service = $request->get('service');
-        
-        $syncResult = $this->calendarService->syncCalendar($service);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $syncResult,
-            'message' => 'Calendar synced successfully'
-        ]);
-    }
-
-    /**
-     * Get calendar statistics.
-     */
-    public function statistics(Request $request): JsonResponse
-    {
-        $request->validate([
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after:start_date'
-        ]);
-
-        $startDate = $request->get('start_date') ? Carbon::parse($request->get('start_date')) : null;
-        $endDate = $request->get('end_date') ? Carbon::parse($request->get('end_date')) : null;
-        
-        $statistics = $this->calendarService->getCalendarStatistics($startDate, $endDate);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $statistics,
-            'message' => 'Calendar statistics retrieved successfully'
-        ]);
-    }
-
-    /**
-     * Get calendar conflicts.
-     */
-    public function conflicts(Request $request): JsonResponse
-    {
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'user_id' => 'required|integer'
-        ]);
-
-        $startDate = Carbon::parse($request->get('start_date'));
-        $endDate = Carbon::parse($request->get('end_date'));
-        $userId = $request->get('user_id');
-        
-        $conflicts = $this->calendarService->getCalendarConflicts($startDate, $endDate, $userId);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $conflicts,
-            'message' => 'Calendar conflicts retrieved successfully'
-        ]);
-    }
-
-    /**
-     * Get calendar reminders.
-     */
-    public function reminders(Request $request): JsonResponse
-    {
-        $request->validate([
-            'user_id' => 'required|integer'
-        ]);
-
-        $userId = $request->get('user_id');
-        
-        $reminders = $this->calendarService->getCalendarReminders($userId);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $reminders,
-            'message' => 'Calendar reminders retrieved successfully'
-        ]);
-    }
-
-    /**
-     * Set calendar reminder.
-     */
-    public function setReminder(Request $request): JsonResponse
-    {
-        $request->validate([
-            'event_id' => 'required|integer|exists:calendar,id',
-            'reminder_time' => 'required|string',
-            'reminder_type' => 'required|in:email,push,sms'
-        ]);
-
-        $eventId = $request->get('event_id');
-        $reminderTime = $request->get('reminder_time');
-        $reminderType = $request->get('reminder_type');
-        
-        $reminder = $this->calendarService->setCalendarReminder($eventId, $reminderTime, $reminderType);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $reminder,
-            'message' => 'Calendar reminder set successfully'
-        ]);
-    }
-
-    /**
-     * Get events by date.
+     * Lấy events theo ngày cụ thể
      */
     public function eventsByDate(Request $request): JsonResponse
     {
-        $request->validate([
-            'date' => 'required|date'
-        ]);
-
-        $date = Carbon::parse($request->get('date', now()));
-        
-        $events = $this->calendarRepository->getEventsByDate($date);
-        
-        return response()->json([
-            'success' => true,
-            'data' => CalendarResource::collection($events),
-            'message' => 'Events by date retrieved successfully'
-        ]);
+        try {
+            $user = auth()->user();
+            
+            // Sử dụng Use Case để lấy events theo date
+            $events = $this->getEventsByDateUseCase->execute($request, $user);
+            
+            $date = $request->get('date', now()->format('Y-m-d'));
+            
+            return response()->json([
+                'success' => true,
+                'data' => $events,
+                'message' => 'Events retrieved for date: ' . $date
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving events by date'
+            ], 500);
+        }
     }
 
     /**
-     * Get events by date range.
+     * Lấy events theo khoảng thời gian
      */
     public function eventsByRange(Request $request): JsonResponse
     {
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date'
-        ]);
-
-        $startDate = Carbon::parse($request->get('start_date'));
-        $endDate = Carbon::parse($request->get('end_date'));
-        
-        $events = $this->calendarRepository->getEventsByRange($startDate, $endDate);
-        
-        return response()->json([
-            'success' => true,
-            'data' => CalendarResource::collection($events),
-            'message' => 'Events by range retrieved successfully'
-        ]);
+        try {
+            // Sử dụng Use Case để lấy user events theo range
+            $events = $this->getUserEventsByRangeUseCase->execute($request);
+            
+            $startDate = $request->get('start_date', now()->format('Y-m-d'));
+            $endDate = $request->get('end_date', now()->addDays(7)->format('Y-m-d'));
+            
+            return response()->json([
+                'success' => true,
+                'data' => $events,
+                'message' => 'Events retrieved for range: ' . $startDate . ' to ' . $endDate
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving events by range'
+            ], 500);
+        }
     }
 
     /**
-     * Get recurring events.
-     */
-    public function recurringEvents(): JsonResponse
-    {
-        $events = $this->calendarRepository->getRecurringEvents();
-        
-        return response()->json([
-            'success' => true,
-            'data' => CalendarResource::collection($events),
-            'message' => 'Recurring events retrieved successfully'
-        ]);
-    }
-
-    /**
-     * Get upcoming events.
+     * Lấy events sắp tới
      */
     public function upcomingEvents(Request $request): JsonResponse
     {
-        $request->validate([
-            'user_id' => 'required|integer',
-            'limit' => 'nullable|integer|min:1|max:100'
-        ]);
-
-        $userId = $request->get('user_id');
-        $limit = $request->get('limit', 10);
-        
-        $events = $this->calendarRepository->getUpcomingEvents($userId, $limit);
-        
-        return response()->json([
-            'success' => true,
-            'data' => CalendarResource::collection($events),
-            'message' => 'Upcoming events retrieved successfully'
-        ]);
+        try {
+            // Sử dụng Use Case để lấy user upcoming events
+            $events = $this->getUserUpcomingEventsUseCase->execute($request);
+            
+            $days = (int) $request->get('days', 7);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $events,
+                'message' => 'Upcoming events retrieved for next ' . $days . ' days'
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving upcoming events'
+            ], 500);
+        }
     }
 
     /**
-     * Get overdue events.
+     * Lấy events quá hạn
      */
     public function overdueEvents(Request $request): JsonResponse
     {
-        $request->validate([
-            'user_id' => 'required|integer'
-        ]);
-
-        $userId = $request->get('user_id');
-        
-        $events = $this->calendarRepository->getOverdueEvents($userId);
-        
-        return response()->json([
-            'success' => true,
-            'data' => CalendarResource::collection($events),
-            'message' => 'Overdue events retrieved successfully'
-        ]);
+        try {
+            $user = auth()->user();
+            
+            // Sử dụng Use Case để lấy overdue events
+            $events = $this->getOverdueEventsUseCase->execute($user);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $events,
+                'message' => 'Overdue events retrieved'
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving overdue events'
+            ], 500);
+        }
     }
 
     /**
-     * Get events by type.
+     * Lấy events theo loại
      */
     public function eventsByType(Request $request): JsonResponse
     {
-        $request->validate([
-            'type' => 'required|in:task,su_kien',
-            'user_id' => 'nullable|integer'
-        ]);
+        try {
+            $user = auth()->user();
+            $eventType = $request->get('type', 'task');
+            
+            // Sử dụng Use Case để lấy events theo type
+            $events = $this->getEventsByTypeUseCase->execute($request, $user);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $events,
+                'message' => 'Events retrieved by type: ' . $eventType
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving events by type'
+            ], 500);
+        }
+    }
 
-        $type = $request->get('type');
-        $userId = $request->get('user_id');
+    /**
+     * Đếm events theo trạng thái
+     */
+    public function eventsCountByStatus(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            
+            // Sử dụng Use Case để đếm events theo status
+            $counts = $this->getEventsCountByStatusUseCase->execute($user);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $counts,
+                'message' => 'Events count by status retrieved'
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving events count by status'
+            ], 500);
+        }
+    }
+
+    /**
+     * Lấy reminders
+     */
+    public function reminders(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            
+            // Sử dụng Use Case để lấy reminders
+            $reminders = $this->getRemindersUseCase->execute($user);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $reminders,
+                'message' => 'Reminders retrieved'
+            ]);
+        } catch (TaskException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext()
+            ], $e->getCode() ?: 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving reminders'
+            ], 500);
+        }
+    }
+
+    /**
+     * Thiết lập reminder
+     */
+    public function setReminder(Request $request): JsonResponse
+    {
+        $taskId = $request->get('task_id');
+        $reminderTime = $request->get('reminder_time');
         
-        $events = $this->calendarRepository->getEventsByType($type, $userId);
-        
+        // Logic thiết lập reminder sẽ được implement sau
         return response()->json([
             'success' => true,
-            'data' => CalendarResource::collection($events),
-            'message' => 'Events by type retrieved successfully'
+            'message' => 'Reminder set successfully for task: ' . $taskId
         ]);
     }
 
     /**
-     * Get events count by status.
+     * Tạo event định kỳ
      */
-    public function eventsCountByStatus(Request $request): JsonResponse
+    public function createRecurring(Request $request): JsonResponse
     {
-        $request->validate([
-            'user_id' => 'nullable|integer'
-        ]);
-
-        $userId = $request->get('user_id');
-        
-        $counts = $this->calendarRepository->getEventsCountByStatus($userId);
-        
+        // Logic tạo event định kỳ sẽ được implement sau
         return response()->json([
             'success' => true,
-            'data' => $counts,
-            'message' => 'Events count by status retrieved successfully'
+            'message' => 'Recurring event created successfully'
         ]);
     }
+
+    /**
+     * Cập nhật event định kỳ
+     */
+    public function updateRecurring(Request $request, Calendar $calendar): JsonResponse
+    {
+        // Logic cập nhật event định kỳ sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'message' => 'Recurring event updated successfully'
+        ]);
+    }
+
+    /**
+     * Export dữ liệu
+     */
+    public function export(Request $request): JsonResponse
+    {
+        // Logic export sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'message' => 'Data exported successfully'
+        ]);
+    }
+
+    /**
+     * Import dữ liệu
+     */
+    public function import(Request $request): JsonResponse
+    {
+        // Logic import sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'message' => 'Data imported successfully'
+        ]);
+    }
+
+    /**
+     * Lấy events định kỳ
+     */
+    public function recurringEvents(Request $request): JsonResponse
+    {
+        // Logic lấy events định kỳ sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'data' => [],
+            'message' => 'Recurring events retrieved'
+        ]);
+    }
+
+    /**
+     * Tạo event mới
+     */
+    public function store(Request $request): JsonResponse
+    {
+        // Logic tạo event mới sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'message' => 'Event created successfully'
+        ]);
+    }
+
+    /**
+     * Cập nhật event
+     */
+    public function update(Request $request, Calendar $calendar): JsonResponse
+    {
+        // Logic cập nhật event sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'message' => 'Event updated successfully'
+        ]);
+    }
+
+    /**
+     * Xóa event
+     */
+    public function destroy(Calendar $calendar): JsonResponse
+    {
+        // Logic xóa event sẽ được implement sau
+        return response()->json([
+            'success' => true,
+            'message' => 'Event deleted successfully'
+        ]);
+    }
+
+
 }

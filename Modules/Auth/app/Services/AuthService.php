@@ -139,4 +139,28 @@ class AuthService
         // Hoặc client sẽ tự xóa token
         return true;
     }
+
+    /**
+     * Tìm sinh viên theo username
+     */
+    public function findStudentByUsername(string $username)
+    {
+        return $this->authRepository->findStudentByUsername($username);
+    }
+
+    /**
+     * Tìm giảng viên theo username
+     */
+    public function findLecturerByUsername(string $username)
+    {
+        return $this->authRepository->findLecturerByUsername($username);
+    }
+
+    /**
+     * Tạo token cho user
+     */
+    public function createToken($user, string $userType): string
+    {
+        return $this->generateJWTToken($user, $userType);
+    }
 }

@@ -6,19 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Student extends Model
 {
-    protected $table = 'sinh_vien';
+    protected $table = 'student';
 
     protected $fillable = [
-        'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dia_chi', 'email', 'sdt', 'ma_sinh_vien', 'lop_id'
+        'full_name', 'birth_date', 'gender', 'address', 'email', 'phone', 'student_code', 'class_id'
     ];
 
     public function classroom()
     {
-        return $this->belongsTo(Classroom::class, 'lop_id');
+        return $this->belongsTo(Classroom::class, 'class_id');
     }
 
     public function account()
     {
-        return $this->hasOne(StudentAccount::class, 'sinh_vien_id');
+        return $this->hasOne(StudentAccount::class, 'student_id');
     }
 }

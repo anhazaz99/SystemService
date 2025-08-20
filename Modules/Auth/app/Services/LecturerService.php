@@ -19,7 +19,7 @@ class LecturerService
      */
     public function getAllLecturers()
     {
-        return Lecturer::with('account', 'unit')->get();
+        return Lecturer::with('account', 'faculty')->get();
     }
     
     /**
@@ -27,19 +27,25 @@ class LecturerService
      */
     public function getLecturerById(int $id)
     {
-        return Lecturer::with('account', 'unit')->find($id);
+        return Lecturer::with('account', 'faculty')->find($id);
     }
     
     /**
      * Tạo giảng viên mới và tự động tạo tài khoản
      */
-    public function createLecturerWithAccount(array $lecturerData): Lecturer
+    public function createLecturerWithAccount(array $lecturerData, array $accountData = null): Lecturer
     {
         // Tạo giảng viên mới
         $lecturer = Lecturer::create($lecturerData);
         
-        // Tự động tạo tài khoản
-        $this->createLecturerAccount($lecturer);
+        // Tạo tài khoản
+        if ($accountData) {
+            // Sử dụng thông tin tài khoản được cung cấp
+            $this->createLecturerAccountWithData($lecturer, $accountData);
+        } else {
+            // Tự động tạo tài khoản với thông tin mặc định
+            $this->createLecturerAccount($lecturer);
+        }
         
         return $lecturer;
     }
@@ -55,6 +61,19 @@ class LecturerService
         $this->authRepository->createLecturerAccount([
             'username' => $username,
             'password' => $password,
+            'lecturer_id' => $lecturer->id,
+            'is_admin' => false // Mặc định không phải admin
+        ]);
+    }
+
+    /**
+     * Tạo tài khoản cho giảng viên với thông tin được cung cấp
+     */
+    private function createLecturerAccountWithData(Lecturer $lecturer, array $accountData): void
+    {
+        $this->authRepository->createLecturerAccount([
+            'username' => $accountData['username'],
+            'password' => $accountData['password'],
             'lecturer_id' => $lecturer->id,
             'is_admin' => false // Mặc định không phải admin
         ]);

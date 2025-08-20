@@ -4,24 +4,30 @@ namespace Modules\Task\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
+/**
+ * Event Service Provider của module Task
+ * 
+ * Provider này đăng ký các event listeners cho module Task
+ * Tuân thủ Clean Architecture: chỉ đăng ký event mappings, không chứa business logic
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**
-     * The event handler mappings for the application.
+     * Mapping giữa events và listeners cho application
      *
      * @var array<string, array<int, string>>
      */
     protected $listen = [];
 
     /**
-     * Indicates if events should be discovered.
+     * Cho biết có nên tự động discover events không
      *
      * @var bool
      */
     protected static $shouldDiscoverEvents = true;
 
     /**
-     * Configure the proper event listeners for email verification.
+     * Cấu hình event listeners cho email verification
      */
     protected function configureEmailVerification(): void {}
 }

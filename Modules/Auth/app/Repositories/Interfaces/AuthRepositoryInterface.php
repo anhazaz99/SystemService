@@ -46,4 +46,14 @@ interface AuthRepositoryInterface
      * Lấy thông tin giảng viên theo ID
      */
     public function findLecturerById(int $id);
+
+    /**
+     * Tìm sinh viên theo username
+     */
+    public function findStudentByUsername(string $username);
+
+    /**
+     * Tìm giảng viên theo username
+     */
+    public function findLecturerByUsername(string $username);
 }
