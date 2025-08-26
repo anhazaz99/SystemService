@@ -71,6 +71,30 @@ return [
             'block_for' => null,
             'after_commit' => false,
         ],
+        'redis_high' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'high_priority',
+            'retry_after' => 30,
+        ],
+        'redis_low' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'low_priority',
+            'retry_after' => 300,
+        ],
+        'redis_bulk' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'bulk_emails',
+            'retry_after' => 600,
+        ],
+        'redis_emails' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'emails',
+            'retry_after' => 90,
+        ],
 
     ],
 

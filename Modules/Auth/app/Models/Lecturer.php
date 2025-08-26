@@ -9,19 +9,19 @@ class Lecturer extends Model
     protected $table = 'lecturer';
 
     protected $fillable = [
-        'full_name', 'gender', 'address', 'email', 'phone', 'lecturer_code', 'unit_id'
+        'full_name', 'gender', 'address', 'email', 'phone', 'lecturer_code', 'department_id'
     ];
 
     protected $casts = [
-        'unit_id' => 'integer'
+        'department_id' => 'integer'
     ];
 
     /**
      * Get the unit this lecturer belongs to
      */
-    public function unit()
+    public function department()
     {
-        return $this->belongsTo(Unit::class, 'unit_id');
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     /**

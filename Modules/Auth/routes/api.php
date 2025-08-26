@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Auth\app\Http\Controllers\AuthController;
-use Modules\Auth\app\Http\Controllers\StudentController;
-use Modules\Auth\app\Http\Controllers\LecturerController;
+use Modules\Auth\app\Http\Controllers\AuthUserController\AuthController;
+use Modules\Auth\app\Http\Controllers\AuthUserController\StudentController;
+use Modules\Auth\app\Http\Controllers\AuthUserController\LecturerController;
+use Modules\Auth\app\Http\Controllers\DepartmentController\DepartmentController;
+use Modules\Auth\app\Http\Controllers\ClassController\ClassController;
 
 // Auth routes (không cần authentication)
 Route::post('/login', [AuthController::class, 'login']);
@@ -46,4 +48,25 @@ Route::middleware(['jwt'])->group(function () {
 Route::middleware(['jwt'])->group(function () {
     Route::get('/lecturer/profile', [LecturerController::class, 'showOwnProfile']);
     Route::put('/lecturer/profile', [LecturerController::class, 'updateOwnProfile']);
+});
+
+// Department routes - Chỉ admin mới có thể quản lý
+Route::middleware(['jwt', 'admin'])->group(function () {
+    Route::get('/departments', [DepartmentController::class, 'index']);
+    Route::post('/departments', [DepartmentController::class, 'store']);
+    Route::get('/departments/tree', [DepartmentController::class, 'tree']);
+    Route::get('/departments/{id}', [DepartmentController::class, 'show']);
+    Route::put('/departments/{id}', [DepartmentController::class, 'update']);
+    Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
+});
+
+// Class routes - Chỉ admin mới có thể quản lý
+Route::middleware(['jwt', 'admin'])->group(function () {
+    Route::get('/classes', [ClassController::class, 'index']);
+    Route::post('/classes', [ClassController::class, 'store']);
+    Route::get('/classes/faculty/{facultyId}', [ClassController::class, 'getByFaculty']);
+    Route::get('/classes/lecturer/{lecturerId}', [ClassController::class, 'getByLecturer']);
+    Route::get('/classes/{id}', [ClassController::class, 'show']);
+    Route::put('/classes/{id}', [ClassController::class, 'update']);
+    Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
 });

@@ -40,13 +40,13 @@ class AuthServiceProvider extends ServiceProvider
         // Bind Repository Interface
         $this->app->bind(
             \Modules\Auth\app\Repositories\Interfaces\AuthRepositoryInterface::class,
-            \Modules\Auth\app\Repositories\AuthRepository::class
+            \Modules\Auth\app\Repositories\AuthUserRepository\AuthRepository::class
         );
         
         // Bind Services
-        $this->app->bind(\Modules\Auth\app\Services\AuthService::class);
-        $this->app->bind(\Modules\Auth\app\Services\StudentService::class);
-        $this->app->bind(\Modules\Auth\app\Services\LecturerService::class);
+        $this->app->bind(\Modules\Auth\app\Services\AuthUserService\AuthService::class);
+        $this->app->bind(\Modules\Auth\app\Services\AuthUserService\StudentService::class);
+        $this->app->bind(\Modules\Auth\app\Services\AuthUserService\LecturerService::class);
     }
 
     /**

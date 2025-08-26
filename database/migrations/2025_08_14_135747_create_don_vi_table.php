@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('unit', function (Blueprint $table) {
+        Schema::create('department', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255); // Unit name
-            $table->enum('type', ['school', 'faculty', 'department']); // Unit type
+            $table->enum('type', ['school', 'faculty', 'department']); 
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent();
             $table->unsignedBigInteger('parent_id')->nullable();
 
             // Self reference (recursive)

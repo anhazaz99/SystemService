@@ -1,4 +1,5 @@
 {
     "Task": true,
-    "Auth": true
+    "Auth": true,
+    "Notifications": true
 }
